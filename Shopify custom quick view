@@ -1,0 +1,313 @@
+Collecton page:
+=============
+   <button class="button button--small quick-view-btn visible-desktop" data-handle="{{ card_product.handle }}">SELECT SHADE</button>
+
+Theme.liquid:
+============
+<style>
+.quick-view-header-wrapper {
+    border-bottom: 1px solid #D9D9D9;
+    display: flex;
+    justify-content: space-between;
+    padding: 30px 0px;
+}
+
+.quick-view-header span {
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 2.16px;
+    text-transform: uppercase;
+}
+  
+div#quick-view-content {
+    padding: 30px 0px;
+}
+.product-content h2 {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 2.16px;
+    padding: 0;
+    margin: 0;
+}
+p.short-description {
+    font-size: 12px;
+    padding: 2px 0px;
+    margin: 0;
+}
+.product-content span {
+    font-size: 10px;
+    padding: 0;
+    margin: 0;
+}
+
+
+p.selected-variant-title {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: #000;
+    line-height: 17px;
+    margin-bottom: 20px;
+}
+  .quickviewwrapper {
+    display: flex;
+    gap:20px;
+}
+
+.variant-colors input[type=radio] {
+    clip: rect(0,0,0,0);
+    overflow: hidden;
+    position: absolute;
+    height: .1rem;
+    width: .1rem;
+}
+.variant-colors input[type=radio]+.color-swatch {
+    padding: 0;
+    min-width: auto;
+    min-height: auto;
+    width: 40px;
+    height: 40px;
+    box-shadow: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-inline-end: .5rem;
+    cursor: pointer;
+}
+.variant-colors input[type=radio]:checked+.color-swatch{
+   
+  border:1px solid #000;
+}
+  
+  .quick-views {
+    position: fixed;
+    right: -100%;
+    width: 445px;
+    height: 100%;
+    background: #fff;
+    z-index: 9999;
+    transition: right 0.3s ease-in-out;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+  }
+
+
+  
+.quick-views.show {
+  right:0;
+    top: 0;
+  }
+@media (max-width: 676px) {
+    .quick-views.show {
+    right: 0;
+    /* max-width: 90vh; */
+    top: auto;
+    bottom: 0;
+    width: 100%;
+    max-height: 90vh;
+    height: auto;
+}
+
+  
+}
+
+
+  .quick-view-content {
+    padding: 20px;
+    overflow-y: auto;
+    height: 100%;
+    position: relative;
+  }
+
+  .quick-view-close {
+    background: none;
+    border: none;
+    font-size: 25px;
+    cursor: pointer;
+  }
+
+button#add-to-cart-btn{
+    margin-top: 10px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 2.16px;
+    text-transform: uppercase;
+    border: 1px solid #000;
+    padding: 12px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all ease .5s;
+    background-color: #000;
+   cursor: pointer;
+}
+
+  
+</style>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Open Quick View Drawer
+    document.querySelectorAll('.quick-view-btn').forEach(button => {
+      button.addEventListener('click', function () {
+        const handle = this.getAttribute('data-handle');
+        fetch(`/products/${handle}?view=quick-view`)
+          .then(res => res.text())
+          .then(html => {
+            document.getElementById('quick-view-content').innerHTML = html;
+            document.getElementById('quick-view-drawer').classList.add('show');
+             document.getElementById('quick-view-drawer').classList.remove('hidden');
+            initQuickViewEvents(); // Attach listeners to dynamic content
+          });
+      });
+    });
+
+    // Close Quick View Drawer
+    document.querySelector('.quick-view-close').addEventListener('click', () => {
+      document.getElementById('quick-view-drawer').classList.remove('show');
+    });
+
+    // Handle add to cart
+    function initQuickViewEvents() {
+      const btn = document.getElementById('add-to-cart-btn');
+         const radios = document.querySelectorAll('input[name="variant"]');
+      const variantTitle = document.getElementById('variant-title');
+      const imageEl = document.getElementById('quick-view-image');
+
+      radios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          // Update variant title
+          if (variantTitle) {
+            variantTitle.textContent = radio.dataset.title || '';
+          }
+
+          // Swap image if available
+          const newImage = radio.dataset.image;
+          if (newImage && imageEl) {
+            imageEl.src = newImage;
+          }
+        });
+      });
+      btn?.addEventListener('click', () => {
+        const selected = document.querySelector('input[name="variant"]:checked');
+        const variantId = selected?.value;
+        if (!variantId) return alert("Select a variant");
+
+        const formData = new FormData();
+        formData.append('id', variantId);
+        formData.append('quantity', 1);
+
+        fetch('/cart/add.js', {
+          method: 'POST',
+          body: formData,
+          headers: { 'Accept': 'application/json' }
+        }).then(res => res.json())
+          .then(data => {
+
+         
+
+            
+            // ✅ Open cart drawer
+            const drawer = document.querySelector('cart-drawer > details');
+            if (drawer) {
+               drawer.classList.add('menu-opening');
+              drawer.setAttribute('open', '');
+            }
+            drawer.classList.remove('is-empty');
+
+            
+       // Fetch updated cart drawer HTML
+        fetch('/?section_id=mini-cart')
+          .then(res => res.text())
+          .then(html => {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            const newDrawer = tempDiv.querySelector('.mini-cart');
+            const existingDrawer = document.querySelector('.mini-cart');
+            if (newDrawer && existingDrawer) {
+              existingDrawer.innerHTML = newDrawer.innerHTML;
+            }
+          });
+
+            // Optionally close quick view
+            document.getElementById('quick-view-drawer').classList.remove('show');
+
+      
+          }).catch(err => {
+            console.error('Add to cart failed', err);
+          });
+      });
+    }
+
+
+
+
+
+
+    
+  });
+</script>
+
+Quick-view.liquid:
+================
+{% layout none %}
+<div class="product-quick-view">
+  <div class="quickviewwrapper">
+     <div class="productimage">
+          <!-- MAIN IMAGE -->
+      <img id="quick-view-images" 
+           src="{{ product.featured_image | img_url: '110x150' }}" 
+           alt="{{ product.title }}">
+     </div>
+    <div class="product-content">
+          <h2>{{ product.title }}</h2>
+          <p class="short-description">
+          {{ product.metafields.custom.collection_short_description }}
+            </p>
+
+          <span >{{ product.price | money }}</span>
+    </div>
+  
+
+  </div>
+
+
+
+    <p class="selected-variant-title">
+  SHADE: <br>
+  <span id="variant-title">{{ product.variants.first.title }}</span>
+</p>
+<div class="variant-colors">
+
+  {% for variant in product.variants %}
+    {% if variant.metafields.custom.color_code %}
+       <input
+        type="radio"
+        name="variant"
+         id="{{ forloop.index }}"
+        data-title="{{ variant.title }}"
+        value="{{ variant.id }}"
+        data-image="{{ variant.image | image_url: width: 400 }}"
+        {% if forloop.first %}checked{% endif %}
+      >
+      <label class="color-swatch"
+            style="background-color: {{ variant.metafields.custom.color_code }};" for="{{ forloop.index }}"></label>
+    
+    {% endif %}
+  {% endfor %}
+</div>
+<button id="add-to-cart-btn">
+  <span >Add to cart</span>
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 15 15"><path stroke="currentColor" d="M5 3.75v-.625a2.5 2.5 0 1 1 5 0v.625m3.438 9.688V4.062H1.562v9.375h11.876Z"></path></svg>
+</button>
+</div>
+
+
+
+
+
