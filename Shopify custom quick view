@@ -4,6 +4,17 @@ Collecton page:
 
 Theme.liquid:
 ============
+<div id="quick-view-drawer" class="quick-views hidden">
+  <div class="quick-view-content">
+    <div class="quick-view-header-wrapper">
+        <div class="quick-view-header"><span>Select shade</span></div>
+      <button class="quick-view-close" aria-label="Close quick view">×</button>
+    </div>
+    
+    <div id="quick-view-content"></div>
+  </div>
+</div>
+
 <style>
 .quick-view-header-wrapper {
     border-bottom: 1px solid #D9D9D9;
